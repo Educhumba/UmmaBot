@@ -263,7 +263,7 @@
       // Show typing dots
       document.getElementById("typing-indicator").style.display = "block";
       try {
-        const res = await fetch("http://localhost:8000/chat", {
+        const res = await fetch(/*"http://localhost:8000/chat"*/ "https://4335e13fa252.ngrok-free.app/chat", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({question: message})
