@@ -1,3 +1,6 @@
 .env
 __pycache__/
 *.pyc
+venv/
+UmmaBot_service_key.json
+*.pdf
