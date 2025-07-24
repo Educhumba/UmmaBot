@@ -20,7 +20,7 @@ import uuid
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://educhumba.github.io"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,7 +66,11 @@ You are UmmaBot, an insurance assistant chatbot for Umma Insurance. Answer the u
 - Use numbered or bullet points for steps.
 - Keep responses under 100 words unless needed.
 -if you have already welcomed the customer STOP repeating the same in every response and stop re introducing yourself in every response.
-
+-if a user requests to speak to a human agent send these contacts depending on what they ask for:
+        -phone number= 0110146704
+        -email address = contactus123@gmail.com
+        -whatsapp = +254110146704
+        -website address = www.ummainsurance.com
 {context}
 
 User Question: {question}
