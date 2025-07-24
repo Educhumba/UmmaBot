@@ -239,8 +239,11 @@
     function formatBotResponse(rawText) {
       return rawText
         .replace(/\n/g, "<br>")
-        .replace(/[-•]\s/g, "• ")
-        .replace(/(\d+\.)\s/g, "<br><strong>$1</strong> ");
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g, "<em>$1</em>")
+        .replace(/^\s*[-•]\s?(.*)$/gm, "• $1")
+        .replace(/(• .*)/g, "<br>$1")
+        .replace(/(\d+\.\s)/g, "<br><strong>$1</strong>");
     }
     function typeWriterEffect(text, callback) {
       let i = 0;
