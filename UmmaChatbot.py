@@ -16,7 +16,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import uuid
 
-# --- FastAPI Setup ---
+#  FastAPI Setup 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -26,29 +26,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Request Model ---
+#  Request Model 
 class Query(BaseModel):
     question: str
     user_id: str = Field(default_factory=lambda: str(uuid.uuid4()))  # default user_id if not sent
 
-# --- Load .env ---
+#  Load .env 
 load_dotenv()
 groq_api_key = os.getenv("GROQ_API_KEY")
 
-# --- Load PDF ---
-loader = PyPDFLoader("Umma_Insurance_Training_Document.pdf")
+#  Load PDF 
+loader = PyPDFLoader("Training_Document.pdf")
 docs = loader.load()
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
 chunks = splitter.split_documents(docs)
 
-# --- Chroma Vector Store ---
+#  Chroma Vector Store 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 if os.path.exists("db_groq"):
     vectordb = Chroma(persist_directory="db_groq", embedding_function=embeddings)
 else:
     vectordb = Chroma.from_documents(chunks, embeddings, persist_directory="db_groq")
 
-# --- LLM Setup ---
+#  LLM Setup 
 llm = ChatGroq(
     groq_api_key=groq_api_key,
     model="llama3-8b-8192",
@@ -56,7 +56,7 @@ llm = ChatGroq(
     max_tokens=512
 )
 
-# --- Prompt Template ---
+#  Prompt Template
 custom_prompt = PromptTemplate(
     input_variables=["context", "question"],
     template="""
@@ -66,14 +66,14 @@ You are UmmaBot, an insurance assistant chatbot for Umma Insurance. Answer the u
 - Use numbered or bullet points for steps.
 - Keep responses under 100 words unless needed.
 -if you have already welcomed the customer STOP repeating the same in every response and stop re introducing yourself in every response.
----------------------
+
 {context}
----------------------
+
 User Question: {question}
 Your Response:"""
 )
 
-# --- QA Chains ---
+#  QA Chains 
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=vectordb.as_retriever(search_kwargs={"k": 3}),
@@ -87,10 +87,10 @@ general_qa = RetrievalQA.from_chain_type(
     retriever=vectordb.as_retriever()
 )
 
-# --- Session Tracking ---
+#  Session Tracking 
 user_sessions = {}
 
-# --- Google Sheets Logger ---
+#  Google Sheets Logger 
 def log_to_sheet(user_query: str, bot_response: str):
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -102,11 +102,10 @@ def log_to_sheet(user_query: str, bot_response: str):
     except Exception as e:
         print("[Logging Error]:", e)
 
-# --- Core Logic ---
+#  Core Logic 
 def smart_chat(query: str, user_id: str):
     if not query.strip():
         return "Please enter a valid question."
-
     try:
         # Maintain context per user
         if user_id not in user_sessions:
@@ -133,12 +132,11 @@ def smart_chat(query: str, user_id: str):
         print("ERROR:", error_msg)
         return error_msg
 
-# --- Endpoints ---
+#  Endpoints 
 @app.post("/chat")
 async def chat_endpoint(query: Query):
     response = smart_chat(query.question, query.user_id)
     return {"response": response}
-
 @app.get("/ping")
 async def ping():
     return {"status": "Up and running"}

@@ -65,7 +65,7 @@
     width: 90vw;
     max-width: 360px;
     min-width: 250px;
-    height: 500px;
+    height: 400px;
     background: white;
     border: 2px solid var(--umma-orange);
     border-radius: 12px;
@@ -179,11 +179,11 @@
       font-size: 0.95rem;
     }
     #chat-box {
-      height: 70vh;
+      height: 60vh;
       width: 55vh;
     }
     #chat-icon {
-      padding: 12px;
+      padding: 15px;
       font-size: 20px;
     }
     #send-btn {
@@ -196,7 +196,6 @@
 <body>
   <header>
     <h1>Umma Insurance</h1>
-    <nav><!-- You can add nav links here --></nav>
   </header>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <section class="hero">
@@ -207,14 +206,14 @@
   <div id="chatbot-widget">
   <div id="chat-icon" onclick="toggleChat()"><i class="fa-solid fa-headset"></i></div>
   <div id="chat-box">
-    <div id="chat-header">UMMAN <span onclick="toggleChat()">✖</span></div>
+    <div id="chat-header">UMMAN <span onclick="toggleChat()"><i class="fa-solid fa-xmark"></i></span></div>
     <div id="chat-messages"></div>
     <div id="typing-indicator">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
     <div id="input-area">
       <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleKey(event)">
-      <button onclick="sendMessage()" id="send-btn">➤</button>
+      <button onclick="sendMessage()" id="send-btn"><i class="fa-regular fa-paper-plane"></i></button>
     </div>
     </div>
     </div>
@@ -233,23 +232,42 @@
     function appendMessage(text, sender="user") {
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("message", sender);
-    msgDiv.textContent = text;
+    msgDiv.innerHTML = text;
     document.getElementById("chat-messages").appendChild(msgDiv);
     document.getElementById("chat-messages").scrollTop = document.getElementById("chat-messages").scrollHeight;
     }
-    function typeWriterEffect(text,callback) {
-    let i = 0;
-    const msgDiv = document.createElement("div");
-    msgDiv.classList.add("message", "bot");
-    document.getElementById("chat-messages").appendChild(msgDiv);
-    function type() {
-        if (i < text.length) {
-        msgDiv.textContent += text.charAt(i);
-        i++;
-        setTimeout(type, 25);
-        }else{if (callback) callback()}
+    function formatBotResponse(rawText) {
+      return rawText
+        .replace(/\n/g, "<br>")
+        .replace(/[-•]\s/g, "• ")
+        .replace(/(\d+\.)\s/g, "<br><strong>$1</strong> ");
     }
-    type();
+    function typeWriterEffect(text, callback) {
+      let i = 0;
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message", "bot");
+      document.getElementById("chat-messages").appendChild(msgDiv);
+
+      function type() {
+        if (i < text.length) {
+          const char = text.charAt(i);
+          if (char === "<" && text.substring(i, i + 4) === "<br>") {
+            msgDiv.innerHTML += "<br>";
+            i += 4;
+          } else if (text.substring(i, i + 8).startsWith("<strong>")) {
+            const endTag = text.indexOf("</strong>", i) + 9;
+            msgDiv.innerHTML += text.substring(i, endTag);
+            i = endTag;
+          } else {
+            msgDiv.innerHTML += char;
+            i++;
+          }
+          setTimeout(type, 25);
+        } else {
+          if (callback) callback();
+        }
+      }
+      type();
     }
     async function sendMessage() {
       const inputBox = document.getElementById("user-input");
@@ -260,17 +278,17 @@
       inputBox.value = "";
       //disable send button when bot is typing
       sendBtn.disabled=true;
-      // Show typing dots
       document.getElementById("typing-indicator").style.display = "block";
       try {
-        const res = await fetch(/*"http://localhost:8000/chat"*/ "https://4335e13fa252.ngrok-free.app/chat", {
+        const res = await fetch("http://localhost:8000/chat" /*"https://4335e13fa252.ngrok-free.app/chat"*/, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({question: message})
         });
         const data = await res.json();
         document.getElementById("typing-indicator").style.display = "none";
-        typeWriterEffect(data.response,()=> {sendBtn.disabled=false});
+        const formattedResponse = formatBotResponse(data.response);
+        typeWriterEffect(formattedResponse,()=> {sendBtn.disabled=false});
       } catch (e) {
         document.getElementById("typing-indicator").style.display = "none";
         typeWriterEffect("Oops! Something went wrong.",()=>{sendBtn.disabled=false;});
