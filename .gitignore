@@ -4,3 +4,4 @@ __pycache__/
 venv/
 UmmaBot_service_key.json
 *.pdf
+preprocess.py
