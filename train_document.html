@@ -4,181 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload Training PDF | UmmaBot</title>
-  <style>
-    :root{
-      --umma-orange: #F7941D;
-      --umma-dark: #333333;
-      --umma-light: #ffffff;
-      --umma-gray: #f2f2f2;
-      --success: #1a9a3a;
-      --error: #d04545;
-      --card-width: min(520px, 94vw);
-    }
-    *{box-sizing:border-box}
-    body{
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: linear-gradient(180deg,#fbfbfb 0%, var(--umma-gray) 100%);
-      color:var(--umma-dark);
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-    }
-    .card{
-      width: var(--card-width);
-      background:var(--umma-light);
-      border-radius:14px;
-      box-shadow: 0 10px 30px rgba(30,30,30,0.06);
-      padding:22px;
-      text-align:center;
-    }
-    header{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      justify-content:center;
-      margin-bottom:12px;
-    }
-    .logo-dot{
-      width:44px;
-      height:44px;
-      border-radius:10px;
-      background:linear-gradient(135deg,var(--umma-orange) 0%, #e57d00 100%);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      color:white;
-      font-weight:700;
-      font-size:18px;
-      box-shadow:0 4px 14px rgba(247,148,29,0.18);
-    }
-    h1{
-      margin:0;
-      font-size:18px;
-      color:var(--umma-dark);
-    }
-    p.lead{
-      margin:8px 0 18px;
-      color:#666;
-      font-size:13px;
-    }
-    .drop-area{
-      border:2px dashed rgba(0,0,0,0.06);
-      border-radius:12px;
-      padding:18px;
-      background:linear-gradient(180deg, #fff 0%, #fff8f3 100%);
-      cursor:pointer;
-      transition: all 0.18s ease;
-      display:flex;
-      gap:16px;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      min-height:140px;
-    }
-    .drop-area.dragover{
-      border-color: rgba(0,0,0,0.12);
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
-    }
-    .drop-area .muted{
-      color:#555;
-      font-size:13px;
-    }
-    input[type="file"]{ display:none; }
-    .meta{
-      margin-top:12px;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-    .btn{
-      background:var(--umma-orange);
-      border:none;
-      color:var(--umma-light);
-      padding:10px 16px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-      transition: background .15s ease, transform .07s;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .btn.secondary{
-      background:transparent;
-      border:1px solid rgba(0,0,0,0.06);
-      color:var(--umma-dark);
-    }
-    .filename{
-      font-size:13px;
-      color:#222;
-      padding:6px 10px;
-      border-radius:8px;
-      background:#fff;
-      border:1px solid rgba(0,0,0,0.04);
-    }
-    .progress-wrap{
-      margin-top:14px;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-    }
-    .progress{
-      width:100%;
-      background:#eee;
-      height:10px;
-      border-radius:999px;
-      overflow:hidden;
-      max-width:480px;
-    }
-    .progress-bar{
-      height:100%;
-      width:0%;
-      background:var(--umma-orange);
-      transition: width .3s ease;
-    }
-    .percent{
-      font-size:12px;
-      color:#444;
-    }
-    .message{
-      margin-top:12px;
-      font-size:14px;
-      min-height:20px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-    }
-    .message.success{ color:var(--success); }
-    .message.error{ color:var(--error); }
-    .spinner{
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      border:3px solid rgba(0,0,0,0.08);
-      border-top-color: var(--umma-orange);
-      animation:spin 1s linear infinite;
-      display:inline-block;
-    }
-    @keyframes spin{ to{ transform: rotate(360deg) } }
-    footer{
-      margin-top:18px;
-      font-size:12px;
-      color:#777;
-    }
-
-    @media (max-width:420px){
-      .card{ padding:16px; border-radius:12px; }
-      .logo-dot{ width:40px; height:40px; }
-    }
-  </style>
+  <link rel="stylesheet" href="train.css">
 </head>
 <body>
   <main class="card" role="main" aria-labelledby="title">
@@ -220,7 +46,6 @@
 
     <footer>After upload the server will rebuild the DB — wait for the success message before testing the bot.</footer>
   </main>
-
   <script>
     const UPLOAD_URL = "http://localhost:8000/upload";
     const dropArea = document.getElementById("dropArea");
@@ -333,7 +158,7 @@
       }
     }
 
-    // upload using XHR so we can show progress
+    // upload using XHR to show progress
     uploadBtn.addEventListener("click", (e) => {
       e.preventDefault();
       if(!selectedFile){

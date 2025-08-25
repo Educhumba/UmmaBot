@@ -120,7 +120,7 @@ general_qa = RetrievalQA.from_chain_type(
 async def reload_db():
     global vectordb, qa_chain, general_qa
     try:
-        vectordb = load_vectordb()  # now uses active_db.txt
+        vectordb = load_vectordb()
         qa_chain = ConversationalRetrievalChain.from_llm(
             llm=llm,
             retriever=vectordb.as_retriever(search_kwargs={"k": 3}),
@@ -192,7 +192,7 @@ def log_full_conversation(user_id, rating="", feedback=""):
             feedback 
         ]
         Thread(target=append_to_sheet, args=(row,), daemon=True).start()
-        session["logged"] = True  # mark as logged
+        session["logged"] = True
     except Exception:
         logger.error("Error logging full conversation", exc_info=True)
 
@@ -329,7 +329,6 @@ async def feedback_endpoint(data: FeedbackData):
         # log and remove session
         log_full_conversation(data.user_id, rating, feedback)
         user_sessions.pop(data.user_id, None)
-
         return {"status": "ok", "message": "Feedback logged"}
     except Exception:
         logger.error("Error in feedback endpoint", exc_info=True)
@@ -348,33 +347,27 @@ async def upload_file(file: UploadFile = File(...)):
     try:
         if not file.filename.endswith(".pdf"):
             return {"status": "error", "message": "Only PDF files are allowed."}
-
         # save uploaded PDF temporarily
         temp_path = f"uploaded_{file.filename}"
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-
         # load and split
         loader = PyPDFLoader(temp_path)
         docs = loader.load()
         splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
         chunks = splitter.split_documents(docs)
-
         # create new unique persist dir
         persist_dir = f"db_groq/{uuid.uuid4()}"
         os.makedirs(persist_dir, exist_ok=True)
-
         # build new DB
         vectordb = Chroma.from_documents(
             chunks,
             embeddings,
             persist_directory=persist_dir
         )
-
         # write active path
         with open("active_db.txt", "w") as f:
             f.write(persist_dir)
-
         # re-init QA chains with new DB
         qa_chain = ConversationalRetrievalChain.from_llm(
             llm=llm,
@@ -387,10 +380,8 @@ async def upload_file(file: UploadFile = File(...)):
             chain_type="stuff",
             retriever=vectordb.as_retriever()
         )
-
         # cleanup temp file
         os.remove(temp_path)
-
         return {"status": "success", "message": f"New training document processed. Active DB: {persist_dir}"}
 
     except Exception as e:
