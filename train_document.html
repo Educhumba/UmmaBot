@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload Training PDF | UmmaBot</title>
+  <style>
+    :root{
+      --umma-orange: #F7941D;
+      --umma-dark: #333333;
+      --umma-light: #ffffff;
+      --umma-gray: #f2f2f2;
+      --success: #1a9a3a;
+      --error: #d04545;
+      --card-width: min(520px, 94vw);
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#fbfbfb 0%, var(--umma-gray) 100%);
+      color:var(--umma-dark);
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .card{
+      width: var(--card-width);
+      background:var(--umma-light);
+      border-radius:14px;
+      box-shadow: 0 10px 30px rgba(30,30,30,0.06);
+      padding:22px;
+      text-align:center;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:center;
+      margin-bottom:12px;
+    }
+    .logo-dot{
+      width:44px;
+      height:44px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--umma-orange) 0%, #e57d00 100%);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      color:white;
+      font-weight:700;
+      font-size:18px;
+      box-shadow:0 4px 14px rgba(247,148,29,0.18);
+    }
+    h1{
+      margin:0;
+      font-size:18px;
+      color:var(--umma-dark);
+    }
+    p.lead{
+      margin:8px 0 18px;
+      color:#666;
+      font-size:13px;
+    }
+    .drop-area{
+      border:2px dashed rgba(0,0,0,0.06);
+      border-radius:12px;
+      padding:18px;
+      background:linear-gradient(180deg, #fff 0%, #fff8f3 100%);
+      cursor:pointer;
+      transition: all 0.18s ease;
+      display:flex;
+      gap:16px;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      min-height:140px;
+    }
+    .drop-area.dragover{
+      border-color: rgba(0,0,0,0.12);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+    .drop-area .muted{
+      color:#555;
+      font-size:13px;
+    }
+    input[type="file"]{ display:none; }
+    .meta{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .btn{
+      background:var(--umma-orange);
+      border:none;
+      color:var(--umma-light);
+      padding:10px 16px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:14px;
+      transition: background .15s ease, transform .07s;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.secondary{
+      background:transparent;
+      border:1px solid rgba(0,0,0,0.06);
+      color:var(--umma-dark);
+    }
+    .filename{
+      font-size:13px;
+      color:#222;
+      padding:6px 10px;
+      border-radius:8px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.04);
+    }
+    .progress-wrap{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+    }
+    .progress{
+      width:100%;
+      background:#eee;
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      max-width:480px;
+    }
+    .progress-bar{
+      height:100%;
+      width:0%;
+      background:var(--umma-orange);
+      transition: width .3s ease;
+    }
+    .percent{
+      font-size:12px;
+      color:#444;
+    }
+    .message{
+      margin-top:12px;
+      font-size:14px;
+      min-height:20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+    .message.success{ color:var(--success); }
+    .message.error{ color:var(--error); }
+    .spinner{
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      border:3px solid rgba(0,0,0,0.08);
+      border-top-color: var(--umma-orange);
+      animation:spin 1s linear infinite;
+      display:inline-block;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg) } }
+    footer{
+      margin-top:18px;
+      font-size:12px;
+      color:#777;
+    }
+
+    @media (max-width:420px){
+      .card{ padding:16px; border-radius:12px; }
+      .logo-dot{ width:40px; height:40px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <header>
+      <div class="logo-dot" aria-hidden="true">U</div>
+      <div>
+        <h1 id="title">Upload Training PDF</h1>
+        <p class="lead">Add or replace the training document used by UmmaBot (PDF only).</p>
+      </div>
+    </header>
+
+    <label id="dropArea" class="drop-area" for="pdfFile" tabindex="0" aria-describedby="dropHelp">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3v12" stroke="#F7941D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 7l4-4 4 4" stroke="#F7941D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 15v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2" stroke="#F7941D" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="font-weight:600;color:var(--umma-dark)">Drop PDF here or click to choose</div>
+        <div id="dropHelp" class="muted">Only <strong>.pdf</strong> allowed</div>
+      </div>
+      <input id="pdfFile" type="file" accept="application/pdf" aria-label="Upload PDF file" />
+    </label>
+
+    <div class="meta" aria-live="polite">
+      <div id="fileInfo" class="filename" style="display:none"></div>
+      <button id="clearBtn" class="btn secondary" style="display:none">Remove</button>
+      <button id="uploadBtn" class="btn" disabled>Upload &amp; Process</button>
+    </div>
+
+    <div class="progress-wrap" aria-hidden="false">
+      <div class="progress" id="progress" style="display:none">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="percent" id="percent" style="display:none">0%</div>
+    </div>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <footer>After upload the server will rebuild the DB — wait for the success message before testing the bot.</footer>
+  </main>
+
+  <script>
+    const UPLOAD_URL = "http://localhost:8000/upload";
+    const dropArea = document.getElementById("dropArea");
+    const input = document.getElementById("pdfFile");
+    const fileInfo = document.getElementById("fileInfo");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const progress = document.getElementById("progress");
+    const progressBar = document.getElementById("progressBar");
+    const percentText = document.getElementById("percent");
+    const message = document.getElementById("message");
+
+    let selectedFile = null;
+
+    function setSelected(file){
+      selectedFile = file;
+      if(!file){ 
+        fileInfo.style.display = "none";
+        fileInfo.textContent = "";
+        uploadBtn.disabled = true;
+        clearBtn.style.display = "none";
+        return;
+      }
+      // show filename and size
+      const sizeKb = Math.round(file.size / 1024);
+      fileInfo.style.display = "inline-block";
+      fileInfo.textContent = file.name + " • " + sizeKb + " KB";
+      uploadBtn.disabled = false;
+      clearBtn.style.display = "inline-block";
+      message.textContent = "";
+      message.className = "message";
+    }
+
+    function clearSelected(){
+      selectedFile = null;
+      // clear the input safely
+      input.value = "";
+      setSelected(null);
+    }
+
+    // Utility: set input.files using DataTransfer (works cross-browser)
+    function setInputFile(file){
+      try{
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      }catch(e){
+        // fallback: can't set input.files in some contexts — keep selectedFile
+      }
+    }
+    // Click/select via label triggers input; also handle change
+    input.addEventListener("change", (e) => {
+      if(e.target.files && e.target.files[0]){
+        setSelected(e.target.files[0]);
+        setInputFile(e.target.files[0]);
+      }
+    });
+
+    // Drag & drop
+    ["dragenter","dragover"].forEach(evt => {
+      dropArea.addEventListener(evt, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        dropArea.classList.add("dragover");
+      }, false);
+    });
+
+    ["dragleave","drop"].forEach(evt => {
+      dropArea.addEventListener(evt, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        dropArea.classList.remove("dragover");
+      }, false);
+    });
+
+    dropArea.addEventListener("drop", (e) => {
+      const files = e.dataTransfer && e.dataTransfer.files;
+      if(files && files.length){
+        const file = files[0];
+        if(!file.name.toLowerCase().endsWith(".pdf")){
+          showMessage("Only PDF files are allowed.", "error");
+          return;
+        }
+        setSelected(file);
+        setInputFile(file);
+      }
+    });
+
+    // keyboard accessibility: Enter or Space triggers file input
+    dropArea.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        input.click();
+      }
+    });
+
+    // clear button
+    clearBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      clearSelected();
+    });
+
+    // show messages
+    function showMessage(text, type){
+      message.textContent = text;
+      if(type === "success"){
+        message.className = "message success";
+      } else if(type === "error"){
+        message.className = "message error";
+      } else {
+        message.className = "message";
+      }
+    }
+
+    // upload using XHR so we can show progress
+    uploadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if(!selectedFile){
+        showMessage("Choose a PDF first.", "error");
+        return;
+      }
+
+      const form = new FormData();
+      form.append("file", selectedFile, selectedFile.name);
+
+      // Reset progress UI
+      progressBar.style.width = "0%";
+      progress.style.display = "block";
+      percentText.style.display = "block";
+      percentText.textContent = "0%";
+      showMessage("Uploading...", "");
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", UPLOAD_URL, true);
+
+      // Upload progress (bytes sent)
+      xhr.upload.onprogress = function(e){
+        if(e.lengthComputable){
+          const pct = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = pct + "%";
+          percentText.textContent = pct + "%";
+        }
+      };
+      // When response arrives
+      xhr.onload = function(){
+        // completed upload — server may still be processing; server will respond when done
+        if(xhr.status >=200 && xhr.status < 300){
+          let res=null;
+          try{ res = JSON.parse(xhr.responseText); } catch(e){}
+          if(res && res.status === "success"){
+            progressBar.style.width = "100%";
+            percentText.textContent = "100%";
+            showMessage(res.message || "Training document processed successfully.", "success");
+            // keep filename shown, allow removing or reuploading
+          } else {
+            const errMsg = (res && res.message) ? res.message : ("Server returned status " + xhr.status);
+            showMessage("Error: " + errMsg, "error");
+          }
+        } else {
+          showMessage("Upload failed: server returned " + xhr.status, "error");
+        }
+      };
+
+      xhr.onerror = function(){
+        showMessage("Network error during upload.", "error");
+      };
+
+      xhr.onabort = function(){
+        showMessage("Upload aborted.", "error");
+      };
+
+      // If server-side processing is long, the browser waits for response — we already show progress
+      xhr.send(form);
+    });
+
+    // initialize
+    clearSelected();
+  </script>
+</body>
+</html>

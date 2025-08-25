@@ -27,11 +27,11 @@
   </section>
   <!-- Floating Chatbot Widget -->
   <div id="chatbot-widget">
-  <div id="chat-icon" onclick="toggleChat()"><i class="fa-solid fa-headset"></i></div>
+  <div id="chat-icon" onclick="openChat()"><i class="fa-solid fa-headset"></i></div>
   <div id="chat-box">
     <div id="chat-header">
             <span class="chat-title">UMMAN</span>
-            <span class="chat-close" onclick="toggleChat()"><i class="fa-solid fa-xmark"></i></span>
+            <span class="chat-close" onclick="closeChat()"><i class="fa-solid fa-xmark"></i></span>
     </div>
     <div id="chat-messages"></div>
     <div id="typing-indicator">
@@ -46,7 +46,7 @@
     <div id="input-area">
       <div class="menu-toggle" id="menuToggle"><i class="fa-solid fa-ellipsis-vertical"></i></div>
       <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleKey(event)">
-      <button onclick="sendMessage()" id="send-btn"><i class="fa-regular fa-paper-plane"></i></button>
+      <button type="button" onclick="sendMessage()" id="send-btn"><i class="fa-regular fa-paper-plane"></i></button>
     </div>
     </div>
     </div>
@@ -63,12 +63,36 @@
         optionsMenu.style.display = "none";
     }
     });
-    window.onload=()=>{document.getElementById("send-btn").disabled=false};
-    function toggleChat() {
-      chatOpen = !chatOpen;
-      document.getElementById("chat-box").style.display = chatOpen ? "flex" : "none";
-      document.getElementById("chat-icon").style.display = chatOpen ? "none" : "block";
+    // window.onload=()=>{document.getElementById("send-btn").disabled=false};
+    document.addEventListener("DOMContentLoaded", () => {
+      const sendBtn = document.getElementById("send-btn");
+      if (sendBtn) sendBtn.disabled = false;
+
+      const widget = document.getElementById("chatbot-widget");
+      if (widget) {
+        widget.addEventListener("click", (e) => {
+          e.stopPropagation();
+        });
+      }
+    });
+    function openChat() {
+      chatOpen = true;
+      document.getElementById("chat-box").style.display = "flex";
+      document.getElementById("chat-icon").style.display = "none";
     }
+    function closeChat() {
+      chatOpen = false;
+      document.getElementById("chat-box").style.display = "none";
+      document.getElementById("chat-icon").style.display = "block";
+    }
+    // document.addEventListener("DOMContentLoaded", () => {
+    //   const widget = document.getElementById("chatbot-widget");
+    //   if (widget) {
+    //     widget.addEventListener("click", (e) => {
+    //       e.stopPropagation();
+    //     });
+    //   }
+    // });
     function handleKey(event) {
       const sendBtn = document.getElementById("send-btn");
       if (event.key === "Enter" && !sendBtn.disabled){sendMessage()};
@@ -133,6 +157,9 @@
       document.getElementById("user-input").value = "";
       currentUserId = crypto.randomUUID();
       appendMessage("New chat started. How may I help you?", "bot");
+      document.getElementById("input-area").style.display = "flex";
+      document.getElementById("typing-indicator").style.display = "none";
+      document.getElementById("send-btn").disabled = false;
     }
     //sending the users query for answering
     async function sendMessage() {
@@ -142,6 +169,7 @@
       if (!message) return;
       appendMessage(message, "user");
       inputBox.value = "";
+
       //disable send button when bot is typing
       sendBtn.disabled=true;
       document.getElementById("typing-indicator").style.display = "block";
@@ -152,6 +180,12 @@
           body: JSON.stringify({question: message, user_id: currentUserId })
         });
         const data = await res.json();
+      if (data.response === "__SHOW_FEEDBACK__") {
+        typeWriterEffect("Thank you. I am always here to help😊 \n Please leave us a quick feedback below", () => {
+          setTimeout(() => showFeedbackUI(), 300);
+        });
+        return;
+      }
         document.getElementById("typing-indicator").style.display = "none";
         const formattedResponse = formatBotResponse(data.response);
         typeWriterEffect(formattedResponse,()=> {sendBtn.disabled=false});
@@ -160,6 +194,136 @@
         typeWriterEffect("Oops! Something went wrong.",()=>{sendBtn.disabled=false;});
       }
     }
+    
+    let feedbackShown = false;
+    function showFeedbackUI() {
+      if (feedbackShown) return;
+      feedbackShown = true;
+      const chatMessages = document.getElementById("chat-messages");
+
+      // Clear input area so user can't send more messages
+      document.getElementById("input-area").style.display = "none";
+
+      // Create feedback container
+      const feedbackDiv = document.createElement("div");
+      feedbackDiv.classList.add("feedback-container");
+
+      feedbackDiv.innerHTML = `
+        <div class="message bot">
+          <strong>How can you rate the usefulness of the assistant?</strong>
+          <div class="rating-buttons">
+            <div class="rating-row">
+              <button data-rating="Very Good">1. Very Good</button>
+              <button data-rating="Good">2. Good</button>
+            </div>
+            <div class="rating-row center">
+              <button data-rating="Average">3. Average</button>
+            </div>
+            <div class="rating-row">
+              <button data-rating="Poor">4. Poor</button>
+              <button data-rating="Very Poor">5. Very Poor</button>
+            </div>
+          </div>
+        </div>
+        <div class="message-bot">
+          <label for="feedback-text"><strong>What improvements on our services or new products do you recommend?</strong></label>
+          <textarea id="feedback-text" placeholder="Type your feedback here..."></textarea>
+          <div class="feedback-actions">
+            <button id="skip-feedback">Skip</button>
+            <button id="submit-feedback">Submit</button>
+          </div>
+        </div>
+      `;
+
+      chatMessages.appendChild(feedbackDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      let selectedRating = null; 
+      const ratingButtons = feedbackDiv.querySelectorAll(".rating-buttons button");
+      ratingButtons.forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (selectedRating) return;
+          selectedRating = btn.dataset.rating;
+          ratingButtons.forEach(b => b.disabled = true);
+          btn.classList.add("selected");
+
+          //log the selected rating even before feedback has been typed
+          await fetch("http://localhost:8000/feedback", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              user_id: currentUserId,
+              rating: selectedRating,
+              feedback: "",
+              final: false
+            })
+          });
+        });
+      });
+
+      // Submit feedback
+      document.getElementById("submit-feedback").addEventListener("click", async () => {
+        const feedbackText = document.getElementById("feedback-text").value.trim();
+
+        if (!selectedRating) {
+          alert("Please provide a rating.");
+          return;
+        }
+        document.getElementById("submit-feedback").disabled = true;
+
+        try {
+          await fetch("http://localhost:8000/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: currentUserId,
+              rating: selectedRating,
+              feedback: feedbackText,
+              final: true
+            })
+          });
+          document.getElementById("typing-indicator").style.display = "none";
+          feedbackShown = false;
+          startNewChat();
+          appendMessage("Thank you for your feedback!😊 It helps us improve our services for you", "bot");
+        } catch (e) {
+          alert("Error submitting feedback. Please try again.");
+          document.getElementById("submit-feedback").disabled = false
+        }
+      });
+      document.getElementById("skip-feedback").addEventListener("click", async () => {
+        try {
+          await fetch("http://localhost:8000/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: currentUserId,
+              rating: selectedRating || "",
+              feedback: "",
+              final: true
+            })
+          });
+          document.getElementById("typing-indicator").style.display = "none";
+          feedbackShown = false;
+          startNewChat();
+        } catch (e) {
+          alert("Error skipping feedback. Please try again.");
+        }
+      });
+    }
+
+    let inactivityTimer;
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      if (chatOpen) {
+        inactivityTimer = setTimeout(() => {
+          showFeedbackUI();
+        }, 4 * 60 * 1000); // 4 minutes
+      }
+    }
+    // Call reset timer whenever user sends message or bot responds
+    document.getElementById("send-btn").addEventListener("click", resetInactivityTimer);
+    document.getElementById("user-input").addEventListener("keypress", resetInactivityTimer);
   </script>
 </body>
 </html>
